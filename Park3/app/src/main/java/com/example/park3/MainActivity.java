@@ -27,7 +27,6 @@ import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -69,7 +68,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private boolean mFlashSupported;
     private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;    
+    private HandlerThread mBackgroundThread;
+    private Handler mHandler;
+    private int mInterval = 3000;
+    private String GOOD_TEXT = "Accessible Parking Permit";
+    private String lastReadString = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(textureListener);
 //        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
+        mHandler = new Handler();
+        startRepeatingTask();
      }
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -103,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onOpened(CameraDevice camera) {
             //This is called when the camera is open
-            toasty("onOpened");
             cameraDevice = camera;
             createCameraPreview();
         }
@@ -113,15 +117,17 @@ public class MainActivity extends AppCompatActivity {
         }
         @Override
         public void onError(CameraDevice camera, int error) {
-            cameraDevice.close();
-            cameraDevice = null;
+            toasty("Camera Error " + error);
+            if( cameraDevice != null) {
+                cameraDevice.close();
+                cameraDevice = null;
+            }
         }
     };
     final CameraCaptureSession.CaptureCallback captureCallbackListener = new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-            Toast.makeText(MainActivity.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
             createCameraPreview();
         }
     };
@@ -142,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
     }
     protected void takePicture() {
         if(null == cameraDevice) {
-            toasty("cameraDevice is null");
+//            toasty("cameraDevice is null");
             return;
         }
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -157,6 +163,9 @@ public class MainActivity extends AppCompatActivity {
             if (jpegSizes != null && 0 < jpegSizes.length) {
                 width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
+//                toasty("width = " + width + " height is " + height);
+                width = 1280;
+                height = 960;
             }
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
@@ -207,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    toasty( "Saved:" + file);
+//                    toasty( "Saved:" + file);
                     createCameraPreview();
                 }
             };
@@ -249,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    Toast.makeText(MainActivity.this, "Configuration change", Toast.LENGTH_SHORT).show();
+                    toasty("Configuration change");
                 }
             }, null);
         } catch (CameraAccessException e) {
@@ -258,7 +267,6 @@ public class MainActivity extends AppCompatActivity {
     }
     private void openCamera() {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        toasty("is camera open");
         try {
             cameraId = manager.getCameraIdList()[0];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
@@ -274,7 +282,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-        toasty("openCamera X");
     }
     protected void updatePreview() {
         if(null == cameraDevice) {
@@ -302,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 // close the app
-                Toast.makeText(MainActivity.this, "Sorry!!!, you can't use this app without granting permission", Toast.LENGTH_LONG).show();
+                toasty("Sorry, you can't use this app without granting permission");
                 finish();
             }
         }
@@ -310,7 +317,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        toasty("onResume");
         startBackgroundThread();
         if (textureView.isAvailable()) {
             openCamera();
@@ -320,52 +326,13 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onPause() {
-        toasty("onPause");
         //closeCamera();
         stopBackgroundThread();
         super.onPause();
     }
-    public void onMyFirstButton(View view) {
-        Context context = getApplicationContext();
-        CharSequence text = "Starting...!\n starting again \n starting again \n";
-        int duration = Toast.LENGTH_SHORT;
-
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
-
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.permit);
-
-                TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
-
-                if (!textRecognizer.isOperational()) {
-                    Toast.makeText(context, "could not get the text", Toast.LENGTH_SHORT).show();
-                } else {
-                    Frame frame = new Frame.Builder().setBitmap(bitmap).build();
-                    SparseArray<TextBlock> items = textRecognizer.detect(frame);
-                    StringBuilder sb = new StringBuilder();
-
-                    for (int i = 0; i < items.size(); ++i) {
-                        TextBlock myItem = items.valueAt(i);
-                        sb.append(myItem.getValue());
-                        sb.append("\n");
-            }
-            String l = sb.toString();
-            Toast.makeText(context, l, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public void startCamera(View view) {
-//        toasty("taking picture");
-        takePicture();
-    }
-
-    public void stopCamera(View view) {
-        toasty("done taking picture");
-    }
-
     public void toasty(String text){
         Context context = getApplicationContext();
-        Toast.makeText(context, text , Toast.LENGTH_LONG).show();
+        Toast.makeText(context, text , Toast.LENGTH_SHORT).show();
     }
 
     public void decodeImage(Image image){
@@ -390,9 +357,58 @@ public class MainActivity extends AppCompatActivity {
                 sb.append(myItem.getValue());
                 sb.append("\n");
             }
-            String l = sb.toString();
-            toasty(l);
+            lastReadString = sb.toString();
+//            toasty(lastReadString);
         }
 
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopRepeatingTask();
+    }
+
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                updateStatus(); //this function can change value of mInterval.
+            } finally {
+                // 100% guarantee that this always happens, even if
+                // your update method throws an exception
+                mHandler.postDelayed(mStatusChecker, mInterval);
+            }
+        }
+    };
+
+    void startRepeatingTask() {
+        mStatusChecker.run();
+    }
+
+    void stopRepeatingTask() {
+        mHandler.removeCallbacks(mStatusChecker);
+    }
+
+    public void updateStatus(){
+        takePicture();
+//        toasty(lastReadString);
+        if (hasNumber(lastReadString)){
+            if (hasPermit(lastReadString)) {
+                toasty("Welcome\n" + lastReadString);
+            }
+            else{
+               toasty("bad!!! breaking the law\n" + lastReadString);
+            }
+        }
+
+    }
+
+    public boolean hasNumber(String text){
+        return text.contains("ACRX") && text.contains("401");
+    }
+
+    public boolean hasPermit (String text){
+        return text.contains(GOOD_TEXT);
     }
 }
