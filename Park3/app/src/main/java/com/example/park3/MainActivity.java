@@ -18,6 +18,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -51,12 +52,14 @@ public class MainActivity extends AppCompatActivity {
     private Button takePictureButton;
     private TextureView textureView;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+
     private String cameraId;
     protected CameraDevice cameraDevice;
     protected CameraCaptureSession cameraCaptureSessions;
@@ -70,9 +73,13 @@ public class MainActivity extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private Handler mHandler;
-    private int mInterval = 3000;
-    private String GOOD_TEXT = "Accessible Parking Permit";
+    private int mInterval = 4000;
+    private String GOOD_TEXT = "Permit";
     private String lastReadString = "";
+    private boolean prevNum = false;
+    private boolean prevPermit = false;
+    private int skipPicture = 0;
+    private int SKIP_TIMES = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,21 +92,25 @@ public class MainActivity extends AppCompatActivity {
         assert takePictureButton != null;
         mHandler = new Handler();
         startRepeatingTask();
-     }
+    }
+
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
             //open your camera here
             openCamera();
         }
+
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
             // Transform you image captured size according to the surface width and height
         }
+
         @Override
         public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
             return false;
         }
+
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {
         }
@@ -111,14 +122,16 @@ public class MainActivity extends AppCompatActivity {
             cameraDevice = camera;
             createCameraPreview();
         }
+
         @Override
         public void onDisconnected(CameraDevice camera) {
             cameraDevice.close();
         }
+
         @Override
         public void onError(CameraDevice camera, int error) {
             toasty("Camera Error " + error);
-            if( cameraDevice != null) {
+            if (cameraDevice != null) {
                 cameraDevice.close();
                 cameraDevice = null;
             }
@@ -131,11 +144,13 @@ public class MainActivity extends AppCompatActivity {
             createCameraPreview();
         }
     };
+
     protected void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("Camera Background");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
+
     protected void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
@@ -146,8 +161,9 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     protected void takePicture() {
-        if(null == cameraDevice) {
+        if (null == cameraDevice) {
 //            toasty("cameraDevice is null");
             return;
         }
@@ -177,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-            final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+            final File file = new File(Environment.getExternalStorageDirectory() + "/pic.jpg");
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
@@ -199,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
+
                 private void save(byte[] bytes) throws IOException {
                     OutputStream output = null;
                     try {
@@ -229,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
+
                 @Override
                 public void onConfigureFailed(CameraCaptureSession session) {
                 }
@@ -237,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     protected void createCameraPreview() {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
@@ -245,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
             Surface surface = new Surface(texture);
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.addTarget(surface);
-            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback(){
+            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                     //The camera is already closed
@@ -256,6 +275,7 @@ public class MainActivity extends AppCompatActivity {
                     cameraCaptureSessions = cameraCaptureSession;
                     updatePreview();
                 }
+
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
                     toasty("Configuration change");
@@ -265,6 +285,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     private void openCamera() {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -283,8 +304,9 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     protected void updatePreview() {
-        if(null == cameraDevice) {
+        if (null == cameraDevice) {
             toasty("updatePreview error, return");
         }
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
@@ -294,6 +316,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     private void closeCamera() {
         if (null != cameraDevice) {
             cameraDevice.close();
@@ -304,6 +327,7 @@ public class MainActivity extends AppCompatActivity {
             imageReader = null;
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
@@ -314,6 +338,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -324,18 +349,20 @@ public class MainActivity extends AppCompatActivity {
             textureView.setSurfaceTextureListener(textureListener);
         }
     }
+
     @Override
     protected void onPause() {
         //closeCamera();
         stopBackgroundThread();
         super.onPause();
     }
-    public void toasty(String text){
+
+    public void toasty(String text) {
         Context context = getApplicationContext();
-        Toast.makeText(context, text , Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
     }
 
-    public void decodeImage(Image image){
+    public void decodeImage(Image image) {
         Context context = getApplicationContext();
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.capacity()];
@@ -390,25 +417,57 @@ public class MainActivity extends AppCompatActivity {
         mHandler.removeCallbacks(mStatusChecker);
     }
 
-    public void updateStatus(){
-        takePicture();
-//        toasty(lastReadString);
-        if (hasNumber(lastReadString)){
-            if (hasPermit(lastReadString)) {
-                toasty("Welcome\n" + lastReadString);
-            }
-            else{
-               toasty("bad!!! breaking the law\n" + lastReadString);
-            }
+    public void updateStatus() {
+        if(skipPicture > 0) {
+            --skipPicture;
+            return;
         }
-
+        takePicture();
+        playClick();
+//        toasty(lastReadString);
+        boolean currNum = hasNumber(lastReadString);
+        boolean currPermit = hasPermit(lastReadString);
+        if (currPermit && prevPermit && prevNum && currNum){
+            playGood();
+            skipPicture = SKIP_TIMES;
+            prevNum = false;
+            prevPermit = false;
+            return;
+        }
+        else if(prevNum && currNum){
+            playBad();
+            skipPicture = SKIP_TIMES;
+            prevNum = false;
+            prevPermit = false;
+            return;
+        }
+        playClick();
+        prevPermit = currPermit;
+        prevNum = currNum;
     }
 
-    public boolean hasNumber(String text){
+    public boolean hasNumber(String text) {
         return text.contains("ACRX") && text.contains("401");
     }
 
-    public boolean hasPermit (String text){
+    public boolean hasPermit(String text) {
         return text.contains(GOOD_TEXT);
+    }
+
+    public MediaPlayer mp1;
+
+    public void playClick() {
+        mp1 = MediaPlayer.create(MainActivity.this, R.raw.click);
+        mp1.start();
+    }
+
+    public void playGood (){
+        mp1 = MediaPlayer.create(MainActivity.this, R.raw.goodcar);
+        mp1.start();
+    }
+
+    public void playBad (){
+        mp1 = MediaPlayer.create(MainActivity.this, R.raw.jerrybadcar);
+        mp1.start();
     }
 }
