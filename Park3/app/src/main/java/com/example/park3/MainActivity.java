@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private Handler mHandler;
-    private int mInterval = 4000;
+    private int mInterval = 3000;
     private String GOOD_TEXT = "Permit";
     private String lastReadString = "";
     private boolean prevNum = false;
