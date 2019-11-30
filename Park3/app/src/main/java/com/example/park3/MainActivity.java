@@ -28,7 +28,9 @@ import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -80,19 +82,45 @@ public class MainActivity extends AppCompatActivity {
     private boolean prevPermit = false;
     private int skipPicture = 0;
     private int SKIP_TIMES = 2;
+    private ImageView viewNoPermit;
+    private ImageView viewNoCar;
+    private ImageView viewValidPermit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textureView = (TextureView) findViewById(R.id.textureView);
+        viewNoPermit = (ImageView) findViewById(R.id.imageNoPermit);
+        viewNoCar = (ImageView) findViewById(R.id.imageNoCar);
+        viewValidPermit = (ImageView) findViewById(R.id.imageValidPermit);
         assert textureView != null;
         textureView.setSurfaceTextureListener(textureListener);
 //        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
         mHandler = new Handler();
         startRepeatingTask();
+        showView(viewNoCar);
     }
+
+    void showView(ImageView view) {
+        if(view == viewValidPermit) {
+            viewValidPermit.setVisibility(View.VISIBLE);
+            viewNoPermit.setVisibility(View.INVISIBLE);
+            viewNoCar.setVisibility(View.INVISIBLE);
+        }
+        if(view ==  viewNoCar) {
+            viewValidPermit.setVisibility(View.INVISIBLE);
+            viewNoPermit.setVisibility(View.INVISIBLE);
+            viewNoCar.setVisibility(View.VISIBLE);
+        }
+        if(view ==  viewNoPermit) {
+            viewValidPermit.setVisibility(View.INVISIBLE);
+            viewNoPermit.setVisibility(View.VISIBLE);
+            viewNoCar.setVisibility(View.INVISIBLE);
+        }
+    }
+
 
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -422,6 +450,7 @@ public class MainActivity extends AppCompatActivity {
             --skipPicture;
             return;
         }
+        showView(viewNoCar);
         takePicture();
         playClick();
 //        toasty(lastReadString);
@@ -462,11 +491,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void playGood (){
+        showView(viewValidPermit);
         mp1 = MediaPlayer.create(MainActivity.this, R.raw.goodcar);
         mp1.start();
     }
 
     public void playBad (){
+        showView(viewNoPermit);
         mp1 = MediaPlayer.create(MainActivity.this, R.raw.jerrybadcar);
         mp1.start();
     }
