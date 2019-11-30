@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private HandlerThread mBackgroundThread;
     private Handler mHandler;
     private int mInterval = 3000;
-    private String GOOD_TEXT = "Permit";
+    private String GOOD_TEXT = "Parking";
     private String lastReadString = "";
     private boolean prevNum = false;
     private boolean prevPermit = false;
@@ -427,6 +427,7 @@ public class MainActivity extends AppCompatActivity {
 //        toasty(lastReadString);
         boolean currNum = hasNumber(lastReadString);
         boolean currPermit = hasPermit(lastReadString);
+//        toasty(" cP = " + currPermit + " pP = " + prevPermit + " pN = " + prevNum + " cN = " + currNum);
         if (currPermit && prevPermit && prevNum && currNum){
             playGood();
             skipPicture = SKIP_TIMES;
@@ -441,13 +442,12 @@ public class MainActivity extends AppCompatActivity {
             prevPermit = false;
             return;
         }
-        playClick();
         prevPermit = currPermit;
         prevNum = currNum;
     }
 
     public boolean hasNumber(String text) {
-        return text.contains("ACRX") && text.contains("401");
+        return text.contains("ACRX");
     }
 
     public boolean hasPermit(String text) {
