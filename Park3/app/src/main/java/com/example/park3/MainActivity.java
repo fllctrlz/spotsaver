@@ -75,16 +75,17 @@ public class MainActivity extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private Handler mHandler;
-    private int mInterval = 3000;
+    private int mInterval = 4000;
     private String GOOD_TEXT = "Parking";
     private String lastReadString = "";
     private boolean prevNum = false;
     private boolean prevPermit = false;
     private int skipPicture = 0;
-    private int SKIP_TIMES = 2;
+    private int SKIP_TIMES = 3;
     private ImageView viewNoPermit;
     private ImageView viewNoCar;
     private ImageView viewValidPermit;
+    public MediaPlayer mp1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
         viewValidPermit = (ImageView) findViewById(R.id.imageValidPermit);
         assert textureView != null;
         textureView.setSurfaceTextureListener(textureListener);
-//        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
         mHandler = new Handler();
         startRepeatingTask();
@@ -120,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
             viewNoCar.setVisibility(View.INVISIBLE);
         }
     }
-
 
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -165,12 +164,13 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-    final CameraCaptureSession.CaptureCallback captureCallbackListener = new CameraCaptureSession.CaptureCallback() {
+    final CameraCaptureSession.CaptureCallback captureCallbackListener =
+        new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-            super.onCaptureCompleted(session, request, result);
-            createCameraPreview();
-        }
+                super.onCaptureCompleted(session, request, result);
+                createCameraPreview();
+            }
     };
 
     protected void startBackgroundThread() {
@@ -192,7 +192,6 @@ public class MainActivity extends AppCompatActivity {
 
     protected void takePicture() {
         if (null == cameraDevice) {
-//            toasty("cameraDevice is null");
             return;
         }
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -202,15 +201,8 @@ public class MainActivity extends AppCompatActivity {
             if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
             }
-            int width = 640;
-            int height = 480;
-            if (jpegSizes != null && 0 < jpegSizes.length) {
-                width = jpegSizes[0].getWidth();
-                height = jpegSizes[0].getHeight();
-//                toasty("width = " + width + " height is " + height);
-                width = 1280;
-                height = 960;
-            }
+            int width = 1280;
+            int height = 960;
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             outputSurfaces.add(reader.getSurface());
@@ -229,14 +221,6 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         image = reader.acquireLatestImage();
                         decodeImage(image);
-//                        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-//                        byte[] bytes = new byte[buffer.capacity()];
-//                        buffer.get(bytes);
-//                        save(bytes);
-//                    } catch (FileNotFoundException e) {
-//                        e.printStackTrace();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
                     } finally {
                         if (image != null) {
                             image.close();
@@ -257,12 +241,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
             reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
-            final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
+            final CameraCaptureSession.CaptureCallback captureListener =
+                    new CameraCaptureSession.CaptureCallback() {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-                    super.onCaptureCompleted(session, request, result);
-//                    toasty( "Saved:" + file);
-                    createCameraPreview();
+                        super.onCaptureCompleted(session, request, result);
+                        createCameraPreview();
                 }
             };
             cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
@@ -323,8 +307,12 @@ public class MainActivity extends AppCompatActivity {
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
             // Add permission for camera and let user grant the permission
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
                 return;
             }
             manager.openCamera(cameraId, stateCallback, null);
@@ -380,7 +368,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        //closeCamera();
         stopBackgroundThread();
         super.onPause();
     }
@@ -396,8 +383,6 @@ public class MainActivity extends AppCompatActivity {
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
         Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-//        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.permit);
-
         TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
 
         if (!textRecognizer.isOperational()) {
@@ -413,7 +398,6 @@ public class MainActivity extends AppCompatActivity {
                 sb.append("\n");
             }
             lastReadString = sb.toString();
-//            toasty(lastReadString);
         }
 
     }
@@ -453,10 +437,8 @@ public class MainActivity extends AppCompatActivity {
         showView(viewNoCar);
         takePicture();
         playClick();
-//        toasty(lastReadString);
         boolean currNum = hasNumber(lastReadString);
         boolean currPermit = hasPermit(lastReadString);
-//        toasty(" cP = " + currPermit + " pP = " + prevPermit + " pN = " + prevNum + " cN = " + currNum);
         if (currPermit && prevPermit && prevNum && currNum){
             playGood();
             skipPicture = SKIP_TIMES;
@@ -482,8 +464,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean hasPermit(String text) {
         return text.contains(GOOD_TEXT);
     }
-
-    public MediaPlayer mp1;
 
     public void playClick() {
         mp1 = MediaPlayer.create(MainActivity.this, R.raw.click);
