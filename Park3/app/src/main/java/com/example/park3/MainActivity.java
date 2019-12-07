@@ -75,17 +75,19 @@ public class MainActivity extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private Handler mHandler;
-    private int mInterval = 4000;
+    private int mInterval = 2000;
     private String GOOD_TEXT = "Parking";
     private String lastReadString = "";
     private boolean prevNum = false;
     private boolean prevPermit = false;
     private int skipPicture = 0;
-    private int SKIP_TIMES = 3;
+    private int SKIP_TIMES = 4;
     private ImageView viewNoPermit;
     private ImageView viewNoCar;
     private ImageView viewValidPermit;
-    public MediaPlayer mp1;
+    public MediaPlayer mpClick;
+    public MediaPlayer mpGood;
+    public MediaPlayer mpBad;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -466,19 +468,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void playClick() {
-        mp1 = MediaPlayer.create(MainActivity.this, R.raw.click);
-        mp1.start();
+        //Log.d("myTag", "This is my message");
+        if( mpClick == null) {
+            mpClick = MediaPlayer.create(MainActivity.this, R.raw.click);
+        }
+        mpClick.start();
     }
 
     public void playGood (){
         showView(viewValidPermit);
-        mp1 = MediaPlayer.create(MainActivity.this, R.raw.goodcar);
-        mp1.start();
+        if (mpGood == null){
+            mpGood = MediaPlayer.create(MainActivity.this, R.raw.goodcar);
+        }
+        mpGood.start();
     }
 
     public void playBad (){
         showView(viewNoPermit);
-        mp1 = MediaPlayer.create(MainActivity.this, R.raw.jerrybadcar);
-        mp1.start();
+        if (mpBad == null){
+            mpBad = MediaPlayer.create(MainActivity.this, R.raw.jerrybadcar);
+        }
+        mpBad.start();
     }
 }
