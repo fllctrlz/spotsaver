@@ -418,6 +418,7 @@ public class MainActivity extends AppCompatActivity {
 
 // reflect the image
         Matrix m = new Matrix();
+//        m.preRotate(90.0f)
         m.preScale(-1, -1);
         Bitmap src = bitmapImage;
         Log.d("myTag", new Integer(src.getWidth()).toString());
