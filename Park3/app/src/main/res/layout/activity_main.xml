@@ -19,7 +19,7 @@
     <ImageView
         android:id="@+id/imageNoPermit"
         android:layout_width="600dp"
-        android:layout_height="670dp"
+        android:layout_height="170dp"
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"
@@ -30,7 +30,7 @@
     <ImageView
         android:id="@+id/imageNoCar"
         android:layout_width="600dp"
-        android:layout_height="670dp"
+        android:layout_height="170dp"
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"
@@ -41,7 +41,7 @@
     <ImageView
         android:id="@+id/imageValidPermit"
         android:layout_width="600dp"
-        android:layout_height="670dp"
+        android:layout_height="170dp"
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"

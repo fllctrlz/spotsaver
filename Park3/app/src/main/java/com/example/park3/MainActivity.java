@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -23,6 +24,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Size;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -41,6 +44,7 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -202,9 +206,15 @@ public class MainActivity extends AppCompatActivity {
             Size[] jpegSizes = null;
             if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
+                Log.d("myTag", jpegSizes.toString());
+
             }
-            int width = 1280;
-            int height = 960;
+            // The resolution of the cell phone camera
+            //int width = 1280;
+            //int height = 960;
+            int width = 3264;
+            int height = 2488;
+
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             outputSurfaces.add(reader.getSurface());
@@ -300,10 +310,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public static File savebitmap(Bitmap bmp)  {
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
+            File f = new File(Environment.getExternalStorageDirectory()
+                    + File.separator + "testimage.jpg");
+            f.createNewFile();
+            FileOutputStream fo = new FileOutputStream(f);
+            fo.write(bytes.toByteArray());
+            fo.close();
+            return f;
+        }
+        catch(Exception e) {
+        }
+        return null;
+    }
+
     private void openCamera() {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
-            cameraId = manager.getCameraIdList()[0];
+// Alternate between front and back cameras
+//            cameraId = manager.getCameraIdList()[0];
+            cameraId = manager.getCameraIdList()[1];
+
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;
@@ -385,12 +415,26 @@ public class MainActivity extends AppCompatActivity {
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
         Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+
+// reflect the image
+        Matrix m = new Matrix();
+        m.preScale(-1, -1);
+        Bitmap src = bitmapImage;
+        Log.d("myTag", new Integer(src.getWidth()).toString());
+        Log.d("myTag", new Integer(src.getHeight()).toString());
+        Bitmap dst = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), m, false);
+        dst.setDensity(DisplayMetrics.DENSITY_DEFAULT);
+//        savebitmap(dst);
+
         TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
 
         if (!textRecognizer.isOperational()) {
             toasty("could not get the text");
         } else {
-            Frame frame = new Frame.Builder().setBitmap(bitmapImage).build();
+            // alternate between original and reflected image
+           // Frame frame = new Frame.Builder().setBitmap(bitmapImage).build();
+            Frame frame = new Frame.Builder().setBitmap(dst).build();
+
             SparseArray<TextBlock> items = textRecognizer.detect(frame);
             StringBuilder sb = new StringBuilder();
 
@@ -400,6 +444,7 @@ public class MainActivity extends AppCompatActivity {
                 sb.append("\n");
             }
             lastReadString = sb.toString();
+            Log.d("myTag", lastReadString);
         }
 
     }
