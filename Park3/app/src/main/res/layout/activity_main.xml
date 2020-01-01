@@ -8,18 +8,17 @@
 
     <TextureView
         android:id="@+id/textureView"
-        android:layout_width="375dp"
-        android:layout_height="218dp"
-        android:layout_marginEnd="42dp"
+        android:layout_width="407dp"
+        android:layout_height="182dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.61"
+        app:layout_constraintHorizontal_bias="0.493"
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
         android:id="@+id/imageNoPermit"
         android:layout_width="600dp"
-        android:layout_height="170dp"
+        android:layout_height="540dp"
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"
@@ -30,7 +29,7 @@
     <ImageView
         android:id="@+id/imageNoCar"
         android:layout_width="600dp"
-        android:layout_height="170dp"
+        android:layout_height="540dp"
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"
@@ -41,7 +40,7 @@
     <ImageView
         android:id="@+id/imageValidPermit"
         android:layout_width="600dp"
-        android:layout_height="170dp"
+        android:layout_height="540dp"
         android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.493"

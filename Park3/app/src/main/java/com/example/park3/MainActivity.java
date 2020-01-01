@@ -107,8 +107,16 @@ public class MainActivity extends AppCompatActivity {
         mHandler = new Handler();
         startRepeatingTask();
         showView(viewNoCar);
+        int FullscreenFlags = View.SYSTEM_UI_FLAG_IMMERSIVE
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN;
+        viewNoCar.setSystemUiVisibility(FullscreenFlags);
+        viewValidPermit.setSystemUiVisibility(FullscreenFlags);
+        viewNoPermit.setSystemUiVisibility(FullscreenFlags);
     }
-
     void showView(ImageView view) {
         if(view == viewValidPermit) {
             viewValidPermit.setVisibility(View.VISIBLE);
