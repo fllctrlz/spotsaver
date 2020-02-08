@@ -165,16 +165,6 @@
     <Content Include="$(SharedContentDir)\media\windows-sdk.png">
       <Link>Assets\windows-sdk.png</Link>
     </Content>
-    <Content Include="Assets\SmallTile-sdk.scale-100.png" />
-    <Content Include="Assets\SmallTile-sdk.scale-150.png" />
-    <Content Include="Assets\SmallTile-sdk.scale-200.png" />
-    <Content Include="Recording.wav">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="smalltile-sdk.scale-400.png" />
-    <Content Include="smalltile-sdk.targetsize-256.png" />
-    <Content Include="smalltile-sdk.targetsize-256_altform-lightunplated.png" />
-    <Content Include="smalltile-sdk.targetsize-256_altform-unplated.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
