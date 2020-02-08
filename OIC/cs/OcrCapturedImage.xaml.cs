@@ -23,7 +23,9 @@ using Windows.Media;
 using Windows.Media.Capture;
 using Windows.Media.MediaProperties;
 using Windows.Media.Ocr;
+using Windows.Storage;
 using Windows.System.Display;
+using Windows.System.Threading;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -64,13 +66,46 @@ namespace SDKTemplate
         private bool mirroringPreview = false;
         private bool externalCamera = false;
 
+        //harrison start
+        private bool previewDisplayed = false;
+        //harrison end
+
         public OcrCapturedImage()
         {
             this.InitializeComponent();
+            //harrison start
+            TimeSpan period = TimeSpan.FromSeconds(10);
+            ThreadPoolTimer PeriodicTimer = ThreadPoolTimer.CreatePeriodicTimer(async (source) =>
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async() =>
+                {
+                    if (previewDisplayed)
+                    {
+                        showCamera();
+                    }
+                    else
+                    {
 
+                        takePicture();
+                    }
+                });
+            }, period);
+            //harrison end
             // Useful to know when to initialize/clean up the camera
             Application.Current.Suspending += Application_Suspending;
             Application.Current.Resuming += Application_Resuming;
+        }
+
+        private async void playSound() {
+            MediaElement PlayMusic = new MediaElement();
+            // StorageFolder Folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
+            StorageFolder storageFolder = await KnownFolders.GetFolderForUserAsync(null, KnownFolderId.PicturesLibrary);
+            //Folder = await Folder.GetFolderAsync("MyFolder");
+            //StorageFile sf = await Folder.GetFileAsync("aaa.mp3");
+            StorageFile sf = await storageFolder.TryGetItemAsync("oof.mp3") as StorageFile;
+            //oof.mp3 is in Pictures
+            PlayMusic.SetSource(await sf.OpenAsync(FileAccessMode.Read), sf.ContentType);
+            PlayMusic.Play();
         }
 
         /// <summary>
@@ -165,8 +200,27 @@ namespace SDKTemplate
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private async void ExtractButton_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        { }
+
+        private void showPreview()
         {
+            previewDisplayed = true;
+            PreviewControl.Visibility = Visibility.Collapsed;
+            Image.Visibility = Visibility.Visible;
+        }
+
+        private void showCamera()
+        {
+            previewDisplayed = false;
+            PreviewControl.Visibility = Visibility.Visible;
+            Image.Visibility = Visibility.Collapsed;
+        }
+        private async void takePicture() {
             //Get information about the preview.
+            //harrison start
+            bool foundLicensePlate = false;
+            bool foundPermit = false;
+            //harrison end
             var previewProperties = mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties;
             int videoFrameWidth = (int)previewProperties.Width;
             int videoFrameHeight = (int)previewProperties.Height;
@@ -230,6 +284,12 @@ namespace SDKTemplate
                     // Iterate over words in line.
                     foreach (var word in line.Words)
                     {
+                        //harrison start
+                        if (word.Text.Equals("Parking")) {
+                            foundPermit = true;
+                            
+                        }
+                        //harrison end
                         // Define the TextBlock.
                         var wordTextBlock = new TextBlock()
                         {
@@ -264,8 +324,15 @@ namespace SDKTemplate
 
             UpdateWordBoxTransform();
 
-            PreviewControl.Visibility = Visibility.Collapsed;
-            Image.Visibility = Visibility.Visible;
+            //harrison start
+            if (foundPermit)
+            {
+                showPreview();
+            }
+            //PreviewControl.Visibility = Visibility.Collapsed;
+            //Image.Visibility = Visibility.Visible;
+            //harrison end
+
             //ExtractButton.Visibility = Visibility.Collapsed;
             //CameraButton.Visibility = Visibility.Visible;
         }
