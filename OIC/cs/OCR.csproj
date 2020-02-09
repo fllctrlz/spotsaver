@@ -166,7 +166,6 @@
       <Link>Assets\windows-sdk.png</Link>
     </Content>
     <Content Include="Assets\novalidpermit.png" />
-    <Content Include="Assets\scanningforpermit.png" />
     <Content Include="Assets\validpermit.png" />
   </ItemGroup>
   <ItemGroup>

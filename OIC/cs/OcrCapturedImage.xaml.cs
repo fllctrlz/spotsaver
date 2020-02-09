@@ -12,6 +12,7 @@
 using SDKTemplate;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -66,27 +67,30 @@ namespace SDKTemplate
         private bool mirroringPreview = false;
         private bool externalCamera = false;
 
-        //harrison start
-        private bool previewDisplayed = false;
-        //harrison end
+        private int maxSkips = 2;
+        private int skip = 0;
 
         public OcrCapturedImage()
         {
             this.InitializeComponent();
             //harrison start
-            TimeSpan period = TimeSpan.FromSeconds(10);
+            TimeSpan period = TimeSpan.FromSeconds(3);
             ThreadPoolTimer PeriodicTimer = ThreadPoolTimer.CreatePeriodicTimer(async (source) =>
             {
                 await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async() =>
                 {
-                    if (previewDisplayed)
+                    if (skip > 0)
                     {
-                        showCamera();
+                        skip--;
+                        if (skip == 0)
+                        {
+                            showCamera();
+                        }
                     }
                     else
                     {
-
                         takePicture();
+                        playSound("click.mp3");
                     }
                 });
             }, period);
@@ -96,13 +100,13 @@ namespace SDKTemplate
             Application.Current.Resuming += Application_Resuming;
         }
 
-        private async void playSound() {
+        private async void playSound(String name) {
             MediaElement PlayMusic = new MediaElement();
             // StorageFolder Folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
             StorageFolder storageFolder = await KnownFolders.GetFolderForUserAsync(null, KnownFolderId.PicturesLibrary);
             //Folder = await Folder.GetFolderAsync("MyFolder");
             //StorageFile sf = await Folder.GetFileAsync("aaa.mp3");
-            StorageFile sf = await storageFolder.TryGetItemAsync("oof.mp3") as StorageFile;
+            StorageFile sf = await storageFolder.TryGetItemAsync(name) as StorageFile;
             //oof.mp3 is in Pictures
             PlayMusic.SetSource(await sf.OpenAsync(FileAccessMode.Read), sf.ContentType);
             PlayMusic.Play();
@@ -202,25 +206,35 @@ namespace SDKTemplate
         private async void ExtractButton_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         { }
 
-        private void showPreview()
+        private void showValidPermit()
         {
-            previewDisplayed = true;
+            skip = maxSkips;
             PreviewControl.Visibility = Visibility.Collapsed;
-            Image.Visibility = Visibility.Visible;
+            Image.Visibility = Visibility.Collapsed;
+            ValidPermit.Visibility = Visibility.Visible;
+            NoValidPermit.Visibility = Visibility.Collapsed;
+            playSound("goodcar.mp3");
         }
-
+        private void showNoValidPermit()
+        {
+            skip = maxSkips;
+            PreviewControl.Visibility = Visibility.Collapsed;
+            Image.Visibility = Visibility.Collapsed;
+            ValidPermit.Visibility = Visibility.Collapsed;
+            NoValidPermit.Visibility = Visibility.Visible;
+            playSound("jerrybadcar.mp3");
+        }
         private void showCamera()
         {
-            previewDisplayed = false;
             PreviewControl.Visibility = Visibility.Visible;
             Image.Visibility = Visibility.Collapsed;
+            ValidPermit.Visibility = Visibility.Collapsed;
+            NoValidPermit.Visibility = Visibility.Collapsed;
         }
         private async void takePicture() {
             //Get information about the preview.
-            //harrison start
             bool foundLicensePlate = false;
-            bool foundPermit = false;
-            //harrison end
+            bool foundValidPermit = false;
             var previewProperties = mediaCapture.VideoDeviceController.GetMediaStreamProperties(MediaStreamType.VideoPreview) as VideoEncodingProperties;
             int videoFrameWidth = (int)previewProperties.Width;
             int videoFrameHeight = (int)previewProperties.Height;
@@ -284,10 +298,16 @@ namespace SDKTemplate
                     // Iterate over words in line.
                     foreach (var word in line.Words)
                     {
+                        Debug.WriteLine(word.Text);
                         //harrison start
                         if (word.Text.Equals("Parking")) {
-                            foundPermit = true;
+                            foundValidPermit = true;
                             
+                        }
+                        if (word.Text.Equals("ONTARIO"))
+                        {
+                            foundLicensePlate = true;
+
                         }
                         //harrison end
                         // Define the TextBlock.
@@ -324,10 +344,17 @@ namespace SDKTemplate
 
             UpdateWordBoxTransform();
 
+
             //harrison start
-            if (foundPermit)
+            if (foundValidPermit && foundLicensePlate)
             {
-                showPreview();
+                showValidPermit();
+
+            }
+
+            else if(foundLicensePlate)
+            {
+                showNoValidPermit();
             }
             //PreviewControl.Visibility = Visibility.Collapsed;
             //Image.Visibility = Visibility.Visible;

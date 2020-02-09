@@ -67,6 +67,18 @@
                     <Image x:Name="PreviewImage"  HorizontalAlignment="Left" VerticalAlignment="Top" SizeChanged="PreviewImage_SizeChanged"/>
                     <Grid x:Name="TextOverlay" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </Grid>
+                <Image x:Name="ValidPermit" Visibility="Collapsed"
+           FocusVisualPrimaryBrush="#FFC81E1E" RequestedTheme="Default" RenderTransformOrigin="0.5,0.5" Canvas.Left="215" Canvas.Top="30">
+                    <Image.Source>
+                        <BitmapImage DecodePixelWidth="1000000" UriSource="Assets/validpermit.png"/>
+                    </Image.Source>
+                </Image>
+                <Image x:Name="NoValidPermit" Visibility="Collapsed"
+           FocusVisualPrimaryBrush="#FFC81E1E" RequestedTheme="Default" RenderTransformOrigin="0.5,0.5" Canvas.Left="215" Canvas.Top="30">
+                    <Image.Source>
+                        <BitmapImage DecodePixelWidth="1000000" UriSource="Assets/novalidpermit.png"/>
+                    </Image.Source>
+                </Image>
             </Grid>
             <!--<StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20" Grid.Row="1">
                 <Button Name="ExtractButton" Tapped="ExtractButton_Tapped" Visibility="Collapsed">
