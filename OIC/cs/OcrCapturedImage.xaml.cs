@@ -627,11 +627,14 @@ namespace SDKTemplate
         ///          any other camera if not, or null if no camera is available.</returns>
         private static async Task<DeviceInformation> FindCameraDeviceByPanelAsync(Windows.Devices.Enumeration.Panel desiredPanel)
         {
-            // Get available devices for capturing pictures.
+            // Get available devices for capturing pictures.6
             var allVideoDevices = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
+            Debug.WriteLine(allVideoDevices.Count);
 
             // Get the desired camera by panel.
-            DeviceInformation desiredDevice = allVideoDevices.FirstOrDefault(x => x.EnclosureLocation != null && x.EnclosureLocation.Panel == desiredPanel);
+
+            //DeviceInformation desiredDevice = allVideoDevices.FirstOrDefault(x => x.EnclosureLocation != null && x.EnclosureLocation.Panel == desiredPanel);
+            DeviceInformation desiredDevice = allVideoDevices.ElementAt(allVideoDevices.Count > 2?2:0);
 
             // If there is no device mounted on the desired panel, return the first device found.
             return desiredDevice ?? allVideoDevices.FirstOrDefault();
